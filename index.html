@@ -1,0 +1,1021 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0C1110">
+<title>Timer Sholat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&display=swap">
+<style>
+  :root {
+    --bg: #F6F7F5;
+    --fg: #0E1513;
+    --muted: #56635E;
+    --line: #DDE3E0;
+    --card: #FFFFFF;
+    --accent: #0B7A5C;
+    --accent-ink: #FFFFFF;
+    --accent-soft: #E6F3EE;
+    --strong: #0E1513;
+    --strong-ink: #FFFFFF;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0C1110;
+      --fg: #F2F5F3;
+      --muted: #93A19C;
+      --line: #24302D;
+      --card: #131A18;
+      --accent: #3DD6A3;
+      --accent-ink: #04211A;
+      --accent-soft: #15302A;
+      --strong: #F2F5F3;
+      --strong-ink: #0C1110;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0C1110;
+    --fg: #F2F5F3;
+    --muted: #93A19C;
+    --line: #24302D;
+    --card: #131A18;
+    --accent: #3DD6A3;
+    --accent-ink: #04211A;
+    --accent-soft: #15302A;
+    --strong: #F2F5F3;
+    --strong-ink: #0C1110;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html { font-size: clamp(14px, calc(0.85vw + 0.55vh), 44px); }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+  }
+  button, input, select { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  [hidden] { display: none !important; }
+  svg { flex-shrink: 0; }
+
+  .icon-btn {
+    width: 3rem; height: 3rem; min-width: 44px; min-height: 44px;
+    border-radius: 0.75rem;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--fg);
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 0;
+  }
+  .icon-btn svg { width: 1.4rem; height: 1.4rem; min-width: 20px; min-height: 20px; }
+  .icon-btn:hover { background: var(--card); }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+  /* ---------- Timer screen ---------- */
+  .app {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: max(16px, 2.5vmin) max(16px, 3.5vw) max(20px, 3vmin);
+  }
+  .top { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+  .place { display: flex; align-items: center; gap: 0.8rem; min-width: 0; }
+  .place svg { width: 1.75rem; height: 1.75rem; color: var(--accent); }
+  .place-name { font-size: 1.4rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .place-sub { font-size: 0.95rem; color: var(--muted); }
+  .top-right { display: flex; align-items: center; gap: 1.5rem; }
+  .clock-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 0.1rem; }
+  .clock { font-size: 1.9rem; font-weight: 500; }
+  .date { font-size: 0.95rem; color: var(--muted); text-align: right; }
+  .actions { display: flex; gap: 0.6rem; }
+
+  .center {
+    flex-grow: 1;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 0.75rem;
+    text-align: center;
+  }
+  .label {
+    font-size: 1.5rem; font-weight: 600;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--accent);
+  }
+  .count {
+    font-size: min(21vw, 36vh);
+    font-weight: 200;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    white-space: nowrap;
+  }
+  .sub { font-size: 1.4rem; color: var(--muted); }
+  .bar { width: min(36rem, 80vw); height: 0.5rem; border-radius: 0.25rem; background: var(--line); overflow: hidden; margin-top: 0.5rem; }
+  .bar > div { height: 100%; border-radius: 0.25rem; background: var(--accent); transition: width 0.9s linear; }
+
+  .prayers {
+    list-style: none; margin: 0; padding: 0;
+    display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1rem;
+  }
+  .prayer {
+    padding: 1.1rem 1.5rem;
+    border-radius: 1rem;
+    background: var(--card);
+    border: 1px solid var(--line);
+    display: flex; flex-direction: column; gap: 0.25rem;
+  }
+  .prayer .n { font-size: 1.25rem; font-weight: 500; }
+  .prayer .t { font-size: 2.75rem; font-weight: 500; letter-spacing: -0.01em; }
+  .prayer.past { opacity: 0.45; }
+  .prayer.active { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .prayer.active .n, .prayer.active .t { font-weight: 600; }
+
+  @media (max-width: 640px) and (orientation: portrait), (max-aspect-ratio: 3/4) {
+    .app { gap: 1.25rem; }
+    .top { align-items: flex-start; }
+    .clock-wrap { display: none; }
+    .place { align-items: flex-start; }
+    .place svg { width: 1.2rem; height: 1.2rem; margin-top: 0.15rem; }
+    .place-name { font-size: 1.2rem; }
+    .label { font-size: 1.05rem; }
+    .sub { font-size: 1.1rem; }
+    .prayers { grid-template-columns: 1fr; gap: 0.5rem; }
+    .prayer { flex-direction: row; justify-content: space-between; align-items: center; padding: 0 1.4rem; min-height: 3.5rem; }
+    .prayer .n, .prayer .t { font-size: 1.3rem; }
+    .mobile-date { display: block !important; }
+    .hide-sm { display: none; }
+  }
+  .mobile-date { display: none; font-size: 0.9rem; color: var(--muted); margin-top: 0.15rem; }
+
+  /* ---------- Location screen ---------- */
+  .setup {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex; justify-content: center;
+    padding: max(32px, 6vh) 20px 32px;
+  }
+  .setup-inner { width: 100%; max-width: 30rem; display: flex; flex-direction: column; gap: 1.5rem; }
+  .setup-inner > * { font-size: 1rem; }
+  .setup h1 { margin: 0; font-size: 2rem; font-weight: 600; letter-spacing: -0.01em; }
+  .setup p { margin: 0.5rem 0 0; color: var(--muted); line-height: 1.5; }
+  .btn {
+    min-height: 3.5rem; border-radius: 0.9rem; border: 0;
+    background: var(--accent); color: var(--accent-ink);
+    font-size: 1.05rem; font-weight: 600;
+    display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+    padding: 0 1.25rem;
+  }
+  .btn svg { width: 1.4rem; height: 1.4rem; }
+  .btn.secondary { background: transparent; color: var(--fg); border: 1px solid var(--line); }
+  .btn:disabled { opacity: 0.6; cursor: progress; }
+  .divider { display: flex; align-items: center; gap: 0.75rem; color: var(--muted); font-size: 0.9rem; }
+  .divider::before, .divider::after { content: ""; flex-grow: 1; height: 1px; background: var(--line); }
+  .field { display: flex; flex-direction: column; gap: 0.5rem; }
+  .field label { font-size: 0.9rem; font-weight: 500; }
+  .search {
+    min-height: 3.25rem; border-radius: 0.9rem; border: 1.5px solid var(--line);
+    background: var(--card); display: flex; align-items: center; gap: 0.6rem; padding: 0 1rem;
+  }
+  .search:focus-within { border-color: var(--accent); }
+  .search svg { width: 1.25rem; height: 1.25rem; color: var(--muted); }
+  .search input { flex-grow: 1; min-width: 0; border: 0; outline: none; background: transparent; font-size: 1rem; padding: 0.8rem 0; }
+  .results { display: flex; flex-direction: column; border-radius: 0.9rem; background: var(--card); border: 1px solid var(--line); overflow: hidden; }
+  .results:empty { display: none; }
+  .result {
+    min-height: 3.75rem; padding: 0.6rem 1rem; border: 0; border-bottom: 1px solid var(--line);
+    background: transparent; text-align: left;
+    display: flex; flex-direction: column; justify-content: center; gap: 0.1rem;
+  }
+  .result:last-child { border-bottom: 0; }
+  .result:hover { background: var(--accent-soft); }
+  .result .r1 { font-weight: 600; }
+  .result .r2 { font-size: 0.9rem; color: var(--muted); }
+  .result-head { padding: 0.6rem 1rem; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--line); }
+  .status { font-size: 0.9rem; color: var(--muted); min-height: 1.2rem; }
+
+  /* ---------- Settings dialog ---------- */
+  dialog {
+    width: min(30rem, calc(100vw - 24px));
+    max-height: calc(100dvh - 24px);
+    border: 1px solid var(--line);
+    border-radius: 1.25rem;
+    padding: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-size: 16px;
+  }
+  dialog::backdrop { background: rgba(0, 0, 0, 0.55); }
+  .sheet { padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+  .sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .sheet-head h2 { margin: 0; font-size: 22px; font-weight: 600; }
+  .sheet-head .icon-btn { width: 44px; height: 44px; }
+  .group { display: flex; flex-direction: column; gap: 10px; }
+  .group h3 { margin: 0 4px; font-size: 13px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .card { border-radius: 16px; background: var(--card); border: 1px solid var(--line); }
+  .row { min-height: 60px; padding: 8px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .row + .row { border-top: 1px solid var(--line); }
+  .row .k { font-weight: 500; }
+  .help { margin: 0; padding: 0 16px 14px; font-size: 14px; line-height: 1.5; color: var(--muted); }
+  .stepper { display: flex; align-items: center; gap: 4px; }
+  .stepper button { width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); display: flex; align-items: center; justify-content: center; padding: 0; }
+  .stepper button svg { width: 18px; height: 18px; }
+  .stepper output { min-width: 84px; text-align: center; font-size: 17px; font-weight: 600; }
+  .segmented { padding: 6px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+  .segmented button { height: 44px; border-radius: 12px; border: 0; background: transparent; font-weight: 600; }
+  .segmented button[aria-pressed="true"] { background: var(--strong); color: var(--strong-ink); }
+  .switch { width: 52px; height: 32px; border-radius: 16px; border: 0; padding: 3px; background: var(--line); display: flex; justify-content: flex-start; }
+  .switch span { width: 26px; height: 26px; border-radius: 13px; background: #FFFFFF; display: block; box-shadow: 0 1px 2px rgba(0,0,0,.2); }
+  .switch[aria-checked="true"] { background: var(--accent); justify-content: flex-end; }
+  .switch:disabled { opacity: 0.5; cursor: not-allowed; }
+  .link-row { width: 100%; border: 0; background: transparent; text-align: left; }
+  .link-row .v { display: flex; align-items: center; gap: 6px; color: var(--muted); }
+  .link-row .v svg { width: 18px; height: 18px; }
+  select { min-height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); padding: 0 10px; max-width: 60%; }
+</style>
+</head>
+<body>
+
+<!-- Layar pilih lokasi -->
+<section class="setup" id="setup" hidden>
+  <div class="setup-inner">
+    <div>
+      <h1>Pilih lokasi</h1>
+      <p>Waktu sholat dihitung dari lokasi ini. Bisa diubah kapan saja di Pengaturan.</p>
+    </div>
+    <button class="btn" id="geoBtn" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+      <span>Gunakan lokasi saat ini</span>
+    </button>
+    <div class="divider">atau cari kota</div>
+    <div class="field">
+      <label for="cityInput">Kota / kabupaten</label>
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input id="cityInput" type="search" autocomplete="off" placeholder="Contoh: Bandung">
+      </div>
+    </div>
+    <div class="status" id="setupStatus" role="status" aria-live="polite"></div>
+    <div class="results" id="results"></div>
+    <button class="btn secondary" id="cancelSetup" type="button" hidden>Batal</button>
+  </div>
+</section>
+
+<!-- Layar timer -->
+<div class="app" id="app" hidden>
+  <header class="top">
+    <div class="place">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
+      <div style="min-width: 0">
+        <div class="place-name" id="placeName"></div>
+        <div class="place-sub"><span id="placeSub"></span><span class="hide-sm" id="placeMethod"></span></div>
+        <div class="mobile-date" id="mobileDate"></div>
+      </div>
+    </div>
+    <div class="top-right">
+      <div class="clock-wrap">
+        <div class="clock" id="clock">--:--</div>
+        <div class="date" id="date"></div>
+      </div>
+      <div class="actions">
+        <button class="icon-btn" id="themeBtn" type="button" aria-label="Ganti mode terang/gelap">
+          <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+        </button>
+        <button class="icon-btn" id="fsBtn" type="button" aria-label="Layar penuh">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg>
+        </button>
+        <button class="icon-btn" id="settingsBtn" type="button" aria-label="Pengaturan">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="center" aria-live="off">
+    <div class="label" id="label"></div>
+    <div class="count" id="count">--:--:--</div>
+    <div class="bar" id="bar" hidden><div id="barFill"></div></div>
+    <div class="sub" id="sub"></div>
+  </main>
+
+  <ol class="prayers" id="prayers"></ol>
+</div>
+
+<!-- Pengaturan -->
+<dialog id="settings" aria-labelledby="settingsTitle">
+  <div class="sheet">
+    <div class="sheet-head">
+      <h2 id="settingsTitle">Pengaturan</h2>
+      <button class="icon-btn" id="closeSettings" type="button" aria-label="Tutup pengaturan">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+
+    <div class="group">
+      <h3>Saat waktu sholat tiba</h3>
+      <div class="card">
+        <div class="row">
+          <span class="k" id="jedaLabel">Durasi jeda</span>
+          <div class="stepper" role="group" aria-labelledby="jedaLabel">
+            <button type="button" data-step="jeda" data-dir="-1" aria-label="Kurangi jeda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+            <output id="jedaOut"></output>
+            <button type="button" data-step="jeda" data-dir="1" aria-label="Tambah jeda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg></button>
+          </div>
+        </div>
+        <p class="help">Layar menampilkan “Waktu sholat telah tiba” selama jeda ini, lalu timer pindah ke sholat berikutnya.</p>
+      </div>
+    </div>
+
+    <div class="group">
+      <h3>Tampilan</h3>
+      <div class="card segmented" role="group" aria-label="Tema">
+        <button type="button" data-theme-opt="light">Terang</button>
+        <button type="button" data-theme-opt="dark">Gelap</button>
+        <button type="button" data-theme-opt="auto">Otomatis</button>
+      </div>
+      <div class="card">
+        <div class="row">
+          <span class="k" id="awakeLabel">Layar tetap menyala</span>
+          <button class="switch" id="awakeSwitch" type="button" role="switch" aria-labelledby="awakeLabel" aria-checked="false"><span></span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="group">
+      <h3>Perhitungan</h3>
+      <div class="card">
+        <button class="row link-row" id="changeLoc" type="button">
+          <span class="k">Lokasi</span>
+          <span class="v"><span id="locOut"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span>
+        </button>
+        <div class="row">
+          <label class="k" for="methodSel">Metode</label>
+          <select id="methodSel"></select>
+        </div>
+        <div class="row">
+          <span class="k" id="ihtiyatLabel">Koreksi waktu (ihtiyat)</span>
+          <div class="stepper" role="group" aria-labelledby="ihtiyatLabel">
+            <button type="button" data-step="ihtiyat" data-dir="-1" aria-label="Kurangi koreksi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+            <output id="ihtiyatOut"></output>
+            <button type="button" data-step="ihtiyat" data-dir="1" aria-label="Tambah koreksi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<script>
+(() => {
+  'use strict';
+
+  /* ================= Data ================= */
+
+  const PRAYERS = [
+    { key: 'fajr', name: 'Subuh' },
+    { key: 'dhuhr', name: 'Dzuhur' },
+    { key: 'asr', name: 'Ashar' },
+    { key: 'maghrib', name: 'Maghrib' },
+    { key: 'isha', name: 'Isya' }
+  ];
+
+  // Sudut matahari untuk Subuh/Isya. ishaMin = Isya sekian menit setelah Maghrib.
+  const METHODS = {
+    kemenag: { name: 'Kemenag RI', fajr: 20, isha: 18 },
+    mwl: { name: 'Muslim World League', fajr: 18, isha: 17 },
+    isna: { name: 'ISNA (Amerika Utara)', fajr: 15, isha: 15 },
+    egypt: { name: 'Mesir', fajr: 19.5, isha: 17.5 },
+    makkah: { name: 'Umm al-Qura (Makkah)', fajr: 18.5, ishaMin: 90 }
+  };
+
+  const WITA = ['bali', 'nusa tenggara barat', 'nusa tenggara timur', 'kalimantan selatan', 'kalimantan timur', 'kalimantan utara', 'sulawesi', 'gorontalo'];
+  const WIT = ['maluku', 'papua'];
+
+  // [nama, provinsi, lintang, bujur]
+  const CITIES = [
+    ['Banda Aceh', 'Aceh', 5.5483, 95.3238],
+    ['Lhokseumawe', 'Aceh', 5.1801, 97.1507],
+    ['Medan', 'Sumatera Utara', 3.5952, 98.6722],
+    ['Pematangsiantar', 'Sumatera Utara', 2.9595, 99.0687],
+    ['Padang', 'Sumatera Barat', -0.9471, 100.4172],
+    ['Bukittinggi', 'Sumatera Barat', -0.3056, 100.3692],
+    ['Pekanbaru', 'Riau', 0.5071, 101.4478],
+    ['Dumai', 'Riau', 1.6658, 101.4475],
+    ['Batam', 'Kepulauan Riau', 1.0456, 104.0305],
+    ['Tanjung Pinang', 'Kepulauan Riau', 0.9186, 104.4554],
+    ['Jambi', 'Jambi', -1.6101, 103.6131],
+    ['Palembang', 'Sumatera Selatan', -2.9761, 104.7754],
+    ['Pangkal Pinang', 'Kepulauan Bangka Belitung', -2.1316, 106.1169],
+    ['Bengkulu', 'Bengkulu', -3.7928, 102.2608],
+    ['Bandar Lampung', 'Lampung', -5.3971, 105.2668],
+    ['Metro', 'Lampung', -5.1131, 105.3067],
+    ['Serang', 'Banten', -6.1104, 106.1640],
+    ['Cilegon', 'Banten', -6.0025, 106.0111],
+    ['Tangerang', 'Banten', -6.1783, 106.6319],
+    ['Tangerang Selatan', 'Banten', -6.2886, 106.7179],
+    ['Jakarta Pusat', 'DKI Jakarta', -6.1865, 106.8341],
+    ['Jakarta Selatan', 'DKI Jakarta', -6.2615, 106.8106],
+    ['Jakarta Timur', 'DKI Jakarta', -6.2250, 106.9004],
+    ['Jakarta Barat', 'DKI Jakarta', -6.1674, 106.7637],
+    ['Jakarta Utara', 'DKI Jakarta', -6.1384, 106.8640],
+    ['Bogor', 'Jawa Barat', -6.5971, 106.8060],
+    ['Depok', 'Jawa Barat', -6.4025, 106.7942],
+    ['Bekasi', 'Jawa Barat', -6.2383, 106.9756],
+    ['Karawang', 'Jawa Barat', -6.3227, 107.3376],
+    ['Purwakarta', 'Jawa Barat', -6.5569, 107.4433],
+    ['Sukabumi', 'Jawa Barat', -6.9277, 106.9300],
+    ['Cianjur', 'Jawa Barat', -6.8222, 107.1394],
+    ['Bandung', 'Jawa Barat', -6.9175, 107.6191],
+    ['Cimahi', 'Jawa Barat', -6.8722, 107.5425],
+    ['Garut', 'Jawa Barat', -7.2279, 107.9087],
+    ['Tasikmalaya', 'Jawa Barat', -7.3274, 108.2207],
+    ['Cirebon', 'Jawa Barat', -6.7320, 108.5523],
+    ['Indramayu', 'Jawa Barat', -6.3276, 108.3249],
+    ['Semarang', 'Jawa Tengah', -6.9667, 110.4167],
+    ['Surakarta (Solo)', 'Jawa Tengah', -7.5755, 110.8243],
+    ['Magelang', 'Jawa Tengah', -7.4797, 110.2177],
+    ['Salatiga', 'Jawa Tengah', -7.3305, 110.5084],
+    ['Tegal', 'Jawa Tengah', -6.8694, 109.1402],
+    ['Pekalongan', 'Jawa Tengah', -6.8886, 109.6753],
+    ['Purwokerto', 'Jawa Tengah', -7.4245, 109.2302],
+    ['Cilacap', 'Jawa Tengah', -7.7260, 109.0094],
+    ['Kudus', 'Jawa Tengah', -6.8048, 110.8405],
+    ['Klaten', 'Jawa Tengah', -7.7058, 110.6061],
+    ['Yogyakarta', 'DI Yogyakarta', -7.7956, 110.3695],
+    ['Sleman', 'DI Yogyakarta', -7.7160, 110.3550],
+    ['Bantul', 'DI Yogyakarta', -7.8881, 110.3289],
+    ['Surabaya', 'Jawa Timur', -7.2575, 112.7521],
+    ['Sidoarjo', 'Jawa Timur', -7.4478, 112.7183],
+    ['Gresik', 'Jawa Timur', -7.1539, 112.6561],
+    ['Malang', 'Jawa Timur', -7.9666, 112.6326],
+    ['Batu', 'Jawa Timur', -7.8672, 112.5239],
+    ['Pasuruan', 'Jawa Timur', -7.6453, 112.9075],
+    ['Probolinggo', 'Jawa Timur', -7.7543, 113.2159],
+    ['Kediri', 'Jawa Timur', -7.8480, 112.0178],
+    ['Blitar', 'Jawa Timur', -8.0955, 112.1609],
+    ['Madiun', 'Jawa Timur', -7.6298, 111.5239],
+    ['Mojokerto', 'Jawa Timur', -7.4722, 112.4336],
+    ['Jember', 'Jawa Timur', -8.1845, 113.6681],
+    ['Banyuwangi', 'Jawa Timur', -8.2191, 114.3691],
+    ['Bangkalan', 'Jawa Timur', -7.0455, 112.7351],
+    ['Pamekasan', 'Jawa Timur', -7.1568, 113.4746],
+    ['Denpasar', 'Bali', -8.6705, 115.2126],
+    ['Singaraja', 'Bali', -8.1120, 115.0882],
+    ['Mataram', 'Nusa Tenggara Barat', -8.5833, 116.1167],
+    ['Bima', 'Nusa Tenggara Barat', -8.4606, 118.7273],
+    ['Sumbawa Besar', 'Nusa Tenggara Barat', -8.4932, 117.4200],
+    ['Kupang', 'Nusa Tenggara Timur', -10.1772, 123.6070],
+    ['Ende', 'Nusa Tenggara Timur', -8.8432, 121.6623],
+    ['Pontianak', 'Kalimantan Barat', -0.0263, 109.3425],
+    ['Singkawang', 'Kalimantan Barat', 0.9060, 108.9872],
+    ['Palangka Raya', 'Kalimantan Tengah', -2.2136, 113.9108],
+    ['Sampit', 'Kalimantan Tengah', -2.5333, 112.9500],
+    ['Banjarmasin', 'Kalimantan Selatan', -3.3186, 114.5944],
+    ['Banjarbaru', 'Kalimantan Selatan', -3.4572, 114.8103],
+    ['Samarinda', 'Kalimantan Timur', -0.5022, 117.1536],
+    ['Balikpapan', 'Kalimantan Timur', -1.2379, 116.8529],
+    ['Bontang', 'Kalimantan Timur', 0.1333, 117.5000],
+    ['Tanjung Selor', 'Kalimantan Utara', 2.8375, 117.3653],
+    ['Tarakan', 'Kalimantan Utara', 3.3000, 117.6333],
+    ['Manado', 'Sulawesi Utara', 1.4748, 124.8421],
+    ['Bitung', 'Sulawesi Utara', 1.4404, 125.1217],
+    ['Gorontalo', 'Gorontalo', 0.5435, 123.0568],
+    ['Palu', 'Sulawesi Tengah', -0.8917, 119.8707],
+    ['Mamuju', 'Sulawesi Barat', -2.6748, 118.8885],
+    ['Makassar', 'Sulawesi Selatan', -5.1477, 119.4327],
+    ['Parepare', 'Sulawesi Selatan', -4.0135, 119.6255],
+    ['Palopo', 'Sulawesi Selatan', -2.9925, 120.1969],
+    ['Kendari', 'Sulawesi Tenggara', -3.9985, 122.5129],
+    ['Baubau', 'Sulawesi Tenggara', -5.4700, 122.6000],
+    ['Ambon', 'Maluku', -3.6954, 128.1814],
+    ['Tual', 'Maluku', -5.6400, 132.7500],
+    ['Ternate', 'Maluku Utara', 0.7906, 127.3842],
+    ['Sofifi', 'Maluku Utara', 0.7372, 127.5588],
+    ['Jayapura', 'Papua', -2.5337, 140.7181],
+    ['Merauke', 'Papua Selatan', -8.4932, 140.4018],
+    ['Nabire', 'Papua Tengah', -3.3667, 135.4833],
+    ['Wamena', 'Papua Pegunungan', -4.0950, 138.9440],
+    ['Manokwari', 'Papua Barat', -0.8615, 134.0620],
+    ['Sorong', 'Papua Barat Daya', -0.8762, 131.2558]
+  ].map(([name, region, lat, lng]) => ({ name, region, lat, lng, tz: tzForProvince(region) }));
+
+  function tzForProvince(region) {
+    const r = (region || '').toLowerCase();
+    if (WIT.some((p) => r.startsWith(p))) return 'Asia/Jayapura';
+    if (WITA.some((p) => r.startsWith(p))) return 'Asia/Makassar';
+    return 'Asia/Jakarta';
+  }
+
+  const TZ_LABEL = { 'Asia/Jakarta': 'WIB', 'Asia/Pontianak': 'WIB', 'Asia/Makassar': 'WITA', 'Asia/Jayapura': 'WIT' };
+  const HARI = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  const BULAN = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+  /* ================= Pengaturan tersimpan ================= */
+
+  const DEFAULTS = { location: null, jeda: 5, theme: 'auto', awake: true, method: 'kemenag', ihtiyat: 2 };
+  const KEY = 'sholat-timer:v1';
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(KEY);
+      return raw ? { ...DEFAULTS, ...JSON.parse(raw) } : { ...DEFAULTS };
+    } catch (e) {
+      return { ...DEFAULTS };
+    }
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(settings)); } catch (e) {}
+  }
+  const settings = load();
+  if (!METHODS[settings.method]) settings.method = 'kemenag';
+
+  /* ================= Perhitungan waktu sholat ================= */
+  // Algoritma astronomis standar (mengikuti PrayTimes.org).
+
+  const DEG = Math.PI / 180;
+  const dsin = (d) => Math.sin(d * DEG);
+  const dcos = (d) => Math.cos(d * DEG);
+  const dtan = (d) => Math.tan(d * DEG);
+  const darcsin = (x) => Math.asin(x) / DEG;
+  const darccos = (x) => Math.acos(x) / DEG;
+  const darctan2 = (y, x) => Math.atan2(y, x) / DEG;
+  const darccot = (x) => Math.atan(1 / x) / DEG;
+  const fix = (a, b) => { a = a - b * Math.floor(a / b); return a < 0 ? a + b : a; };
+
+  function julian(y, m, d) {
+    if (m <= 2) { y -= 1; m += 12; }
+    const A = Math.floor(y / 100);
+    const B = 2 - A + Math.floor(A / 4);
+    return Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + d + B - 1524.5;
+  }
+
+  function sunPosition(jd) {
+    const D = jd - 2451545.0;
+    const g = fix(357.529 + 0.98560028 * D, 360);
+    const q = fix(280.459 + 0.98564736 * D, 360);
+    const L = fix(q + 1.915 * dsin(g) + 0.020 * dsin(2 * g), 360);
+    const e = 23.439 - 0.00000036 * D;
+    const RA = darctan2(dcos(e) * dsin(L), dcos(L)) / 15;
+    return { decl: darcsin(dsin(e) * dsin(L)), eqt: q / 15 - fix(RA, 24) };
+  }
+
+  // Mengembalikan waktu sholat (epoch ms) untuk tanggal lokal y-m-d di lokasi.
+  function prayerTimes(y, m, d, loc, methodKey, ihtiyat) {
+    const method = METHODS[methodKey] || METHODS.kemenag;
+    const { lat, lng } = loc;
+    const jd = julian(y, m, d) - lng / (15 * 24);
+
+    const midDay = (t) => fix(12 - sunPosition(jd + t).eqt, 24);
+    const angleTime = (angle, t, ccw) => {
+      const decl = sunPosition(jd + t).decl;
+      const v = (-dsin(angle) - dsin(decl) * dsin(lat)) / (dcos(decl) * dcos(lat));
+      const T = darccos(Math.max(-1, Math.min(1, v))) / 15;
+      return midDay(t) + (ccw ? -T : T);
+    };
+    const asrTime = (t) => {
+      const decl = sunPosition(jd + t).decl;
+      return angleTime(-darccot(1 + dtan(Math.abs(lat - decl))), t);
+    };
+
+    let t = { fajr: 5, dhuhr: 12, asr: 13, maghrib: 18, isha: 18 };
+    for (let i = 0; i < 2; i++) {
+      const p = (k) => t[k] / 24;
+      const next = {
+        fajr: angleTime(method.fajr, p('fajr'), true),
+        dhuhr: midDay(p('dhuhr')),
+        asr: asrTime(p('asr')),
+        maghrib: angleTime(0.833, p('maghrib'))
+      };
+      next.isha = method.ishaMin ? next.maghrib + method.ishaMin / 60 : angleTime(method.isha, p('isha'));
+      t = next;
+    }
+
+    const base = Date.UTC(y, m - 1, d);
+    const out = {};
+    for (const k of Object.keys(t)) {
+      const utcHours = t[k] - lng / 15;
+      const ms = base + utcHours * 3600000 + (ihtiyat || 0) * 60000;
+      out[k] = Math.ceil(ms / 60000) * 60000;
+    }
+    return out;
+  }
+
+  /* ================= Utilitas waktu & zona ================= */
+
+  const pad = (n) => String(n).padStart(2, '0');
+  const fmtCache = {};
+  function fmt(tz, opts) {
+    const key = tz + JSON.stringify(opts);
+    if (!fmtCache[key]) {
+      try { fmtCache[key] = new Intl.DateTimeFormat('en-GB', { ...opts, timeZone: tz }); }
+      catch (e) { fmtCache[key] = new Intl.DateTimeFormat('en-GB', opts); }
+    }
+    return fmtCache[key];
+  }
+  function partsIn(ms, tz) {
+    const parts = fmt(tz, { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', weekday: 'short', hourCycle: 'h23' }).formatToParts(ms);
+    const o = {};
+    for (const p of parts) o[p.type] = p.value;
+    const wd = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(o.weekday);
+    return { y: +o.year, m: +o.month, d: +o.day, hh: +o.hour % 24, mm: +o.minute, wd };
+  }
+  const hhmm = (ms, tz) => { const p = partsIn(ms, tz); return pad(p.hh) + ':' + pad(p.mm); };
+  function hijri(ms, tz) {
+    try {
+      return new Intl.DateTimeFormat('id-ID-u-ca-islamic-umalqura', { day: 'numeric', month: 'long', year: 'numeric', timeZone: tz }).format(ms);
+    } catch (e) { return ''; }
+  }
+  const deviceTz = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'; } catch (e) { return 'UTC'; } })();
+  function tzLabel(tz) {
+    if (TZ_LABEL[tz]) return TZ_LABEL[tz];
+    try {
+      const p = new Intl.DateTimeFormat('id-ID', { timeZone: tz, timeZoneName: 'short' }).formatToParts(Date.now());
+      const n = p.find((x) => x.type === 'timeZoneName');
+      return n ? n.value : '';
+    } catch (e) { return ''; }
+  }
+
+  /* ================= Jadwal ================= */
+
+  let dayCache = {};
+  function dayTimes(ms) {
+    const loc = settings.location;
+    const p = partsIn(ms, loc.tz);
+    const key = p.y + '-' + p.m + '-' + p.d;
+    if (!dayCache[key]) dayCache[key] = prayerTimes(p.y, p.m, p.d, loc, settings.method, settings.ihtiyat);
+    return dayCache[key];
+  }
+  function resetCache() { dayCache = {}; }
+
+  function schedule(now) {
+    const today = dayTimes(now);
+    const yesterday = dayTimes(now - 86400000);
+    const tomorrow = dayTimes(now + 86400000);
+    const jedaMs = settings.jeda * 60000;
+    const list = PRAYERS.map((p) => ({ ...p, at: today[p.key] }));
+    const all = [
+      { ...PRAYERS[4], at: yesterday.isha },
+      ...list,
+      { ...PRAYERS[0], at: tomorrow.fajr }
+    ];
+    const cur = all.find((p) => now >= p.at && now < p.at + jedaMs) || null;
+    const next = all.find((p) => p.at > now && (!cur || p.at > cur.at));
+    return { list, cur, next, jedaMs };
+  }
+
+  /* ================= Tampilan ================= */
+
+  const $ = (id) => document.getElementById(id);
+  const els = {
+    app: $('app'), setup: $('setup'),
+    placeName: $('placeName'), placeSub: $('placeSub'), mobileDate: $('mobileDate'),
+    clock: $('clock'), date: $('date'),
+    label: $('label'), count: $('count'), sub: $('sub'), bar: $('bar'), barFill: $('barFill'),
+    prayers: $('prayers')
+  };
+
+  let prayerEls = [];
+  function buildPrayerList() {
+    els.prayers.textContent = '';
+    prayerEls = PRAYERS.map((p) => {
+      const li = document.createElement('li');
+      li.className = 'prayer';
+      const n = document.createElement('span'); n.className = 'n'; n.textContent = p.name;
+      const t = document.createElement('span'); t.className = 't'; t.textContent = '--:--';
+      li.append(n, t);
+      els.prayers.append(li);
+      return { li, t };
+    });
+  }
+
+  function setText(el, txt) { if (el.textContent !== txt) el.textContent = txt; }
+
+  function render() {
+    if (!settings.location) return;
+    const loc = settings.location;
+    const now = Date.now();
+    const { list, cur, next, jedaMs } = schedule(now);
+
+    const p = partsIn(now, loc.tz);
+    setText(els.clock, pad(p.hh) + ':' + pad(p.mm));
+    const h = hijri(now, loc.tz);
+    const masehi = HARI[p.wd] + ', ' + p.d + ' ' + BULAN[p.m - 1] + ' ' + p.y;
+    setText(els.date, masehi + (h ? ' · ' + h : ''));
+    setText(els.mobileDate, HARI[p.wd] + ', ' + p.d + ' ' + BULAN[p.m - 1].slice(0, 3) + ' ' + p.y + (h ? ' · ' + h : ''));
+
+    if (cur) {
+      const left = Math.max(0, Math.ceil((cur.at + jedaMs - now) / 1000));
+      setText(els.label, 'Waktu ' + cur.name + ' telah tiba');
+      setText(els.count, pad(Math.floor(left / 60)) + ':' + pad(left % 60));
+      els.bar.hidden = false;
+      els.barFill.style.width = ((left * 1000) / jedaMs * 100).toFixed(2) + '%';
+      setText(els.sub, 'Timer pindah ke ' + next.name + ' setelah jeda');
+    } else {
+      const left = Math.max(0, Math.ceil((next.at - now) / 1000));
+      setText(els.label, 'Menuju ' + next.name);
+      setText(els.count, pad(Math.floor(left / 3600)) + ':' + pad(Math.floor((left % 3600) / 60)) + ':' + pad(left % 60));
+      els.bar.hidden = true;
+      setText(els.sub, 'Adzan ' + next.name + ' pukul ' + hhmm(next.at, loc.tz));
+    }
+
+    // Setelah Isya, kartu Subuh menampilkan jadwal besok.
+    const activeAt = cur ? cur.at : next.at;
+    const afterIsha = !cur && next.at > list[4].at;
+    list.forEach((item, i) => {
+      const e = prayerEls[i];
+      const at = afterIsha && i === 0 ? next.at : item.at;
+      const active = at === activeAt;
+      setText(e.t, hhmm(at, loc.tz));
+      e.li.classList.toggle('active', active);
+      e.li.classList.toggle('past', !active && !afterIsha && at < now);
+    });
+  }
+
+  function renderHeader() {
+    const loc = settings.location;
+    if (!loc) return;
+    setText(els.placeName, loc.name);
+    setText(els.placeSub, [loc.region, tzLabel(loc.tz)].filter(Boolean).join(' · '));
+    setText($('placeMethod'), ' · ' + METHODS[settings.method].name);
+    setText($('locOut'), loc.name);
+  }
+
+  let tickTimer = null;
+  function tick() {
+    render();
+    clearTimeout(tickTimer);
+    tickTimer = setTimeout(tick, 1000 - (Date.now() % 1000) + 5);
+  }
+
+  /* ================= Tema ================= */
+
+  const mql = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  function isDark() {
+    if (settings.theme === 'dark') return true;
+    if (settings.theme === 'light') return false;
+    return !!(mql && mql.matches);
+  }
+  function applyTheme() {
+    const root = document.documentElement;
+    if (settings.theme === 'auto') root.removeAttribute('data-theme');
+    else root.setAttribute('data-theme', settings.theme);
+    const dark = isDark();
+    document.querySelector('.i-sun').style.display = dark ? '' : 'none';
+    document.querySelector('.i-moon').style.display = dark ? 'none' : '';
+    document.querySelector('meta[name="theme-color"]').setAttribute('content', dark ? '#0C1110' : '#F6F7F5');
+    document.querySelectorAll('[data-theme-opt]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.themeOpt === settings.theme)));
+  }
+  if (mql) {
+    const onChange = () => applyTheme();
+    if (mql.addEventListener) mql.addEventListener('change', onChange); else if (mql.addListener) mql.addListener(onChange);
+  }
+  $('themeBtn').addEventListener('click', () => {
+    settings.theme = isDark() ? 'light' : 'dark';
+    save(); applyTheme();
+  });
+
+  /* ================= Layar tetap menyala ================= */
+
+  let wakeLock = null;
+  const wakeSupported = 'wakeLock' in navigator;
+  async function updateWakeLock() {
+    if (!wakeSupported) return;
+    try {
+      if (settings.awake && document.visibilityState === 'visible' && !wakeLock) {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', () => { wakeLock = null; });
+      } else if (!settings.awake && wakeLock) {
+        await wakeLock.release();
+        wakeLock = null;
+      }
+    } catch (e) { wakeLock = null; }
+  }
+  document.addEventListener('visibilitychange', () => {
+    updateWakeLock();
+    if (document.visibilityState === 'visible') tick();
+  });
+
+  /* ================= Layar penuh ================= */
+
+  $('fsBtn').addEventListener('click', () => {
+    const d = document;
+    if (d.fullscreenElement || d.webkitFullscreenElement) {
+      (d.exitFullscreen || d.webkitExitFullscreen).call(d);
+    } else {
+      const el = d.documentElement;
+      const req = el.requestFullscreen || el.webkitRequestFullscreen;
+      if (req) req.call(el);
+    }
+  });
+
+  /* ================= Pengaturan ================= */
+
+  const dlg = $('settings');
+  const methodSel = $('methodSel');
+  for (const [k, m] of Object.entries(METHODS)) {
+    const o = document.createElement('option');
+    o.value = k; o.textContent = m.name;
+    methodSel.append(o);
+  }
+
+  function renderSettings() {
+    $('jedaOut').textContent = settings.jeda + ' menit';
+    $('ihtiyatOut').textContent = (settings.ihtiyat > 0 ? '+' : '') + settings.ihtiyat + ' menit';
+    methodSel.value = settings.method;
+    const sw = $('awakeSwitch');
+    sw.setAttribute('aria-checked', String(!!settings.awake && wakeSupported));
+    sw.disabled = !wakeSupported;
+    if (!wakeSupported) sw.title = 'Browser ini tidak mendukung fitur layar tetap menyala';
+    applyTheme();
+    renderHeader();
+  }
+
+  $('settingsBtn').addEventListener('click', () => {
+    renderSettings();
+    if (dlg.showModal) dlg.showModal(); else dlg.setAttribute('open', '');
+  });
+  $('closeSettings').addEventListener('click', () => dlg.close());
+  dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
+
+  document.querySelectorAll('[data-step]').forEach((b) => {
+    b.addEventListener('click', () => {
+      const k = b.dataset.step;
+      const dir = Number(b.dataset.dir);
+      if (k === 'jeda') settings.jeda = Math.min(30, Math.max(1, settings.jeda + dir));
+      if (k === 'ihtiyat') settings.ihtiyat = Math.min(10, Math.max(0, settings.ihtiyat + dir));
+      if (k === 'ihtiyat') resetCache();
+      save(); renderSettings(); render();
+    });
+  });
+  document.querySelectorAll('[data-theme-opt]').forEach((b) => {
+    b.addEventListener('click', () => { settings.theme = b.dataset.themeOpt; save(); applyTheme(); });
+  });
+  $('awakeSwitch').addEventListener('click', () => {
+    settings.awake = !settings.awake; save(); renderSettings(); updateWakeLock();
+  });
+  methodSel.addEventListener('change', () => {
+    settings.method = methodSel.value; save(); resetCache(); renderSettings(); render();
+  });
+  $('changeLoc').addEventListener('click', () => { dlg.close(); showSetup(); });
+
+  /* ================= Pilih lokasi ================= */
+
+  const input = $('cityInput');
+  const results = $('results');
+  const status = $('setupStatus');
+
+  function norm(s) { return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
+
+  function resultButton(loc) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'result';
+    const r1 = document.createElement('span'); r1.className = 'r1'; r1.textContent = loc.name;
+    const r2 = document.createElement('span'); r2.className = 'r2'; r2.textContent = [loc.region, tzLabel(loc.tz)].filter(Boolean).join(' · ');
+    b.append(r1, r2);
+    b.addEventListener('click', () => chooseLocation(loc));
+    return b;
+  }
+
+  let onlineResults = [];
+  function renderResults() {
+    const q = norm(input.value.trim());
+    results.textContent = '';
+    const local = q
+      ? CITIES.filter((c) => norm(c.name).includes(q) || norm(c.region).includes(q)).slice(0, 8)
+      : CITIES.filter((c) => ['Jakarta Selatan', 'Bandung', 'Surabaya', 'Yogyakarta', 'Medan', 'Makassar'].includes(c.name));
+    local.forEach((c) => results.append(resultButton(c)));
+    const extra = onlineResults.filter((o) => !local.some((c) => norm(c.name) === norm(o.name) && norm(c.region) === norm(o.region)));
+    if (extra.length) {
+      const head = document.createElement('div');
+      head.className = 'result-head';
+      head.textContent = 'Hasil pencarian online';
+      results.append(head);
+      extra.forEach((c) => results.append(resultButton(c)));
+    }
+  }
+
+  function placeFromNominatim(item) {
+    const a = item.address || {};
+    const name = a.city || a.town || a.municipality || a.county || a.village || a.suburb || a.state_district || item.name || (item.display_name || '').split(',')[0];
+    const region = a.state || a.region || a.country || '';
+    const isId = (a.country_code || '').toLowerCase() === 'id';
+    return {
+      name: name || 'Lokasi saya',
+      region: isId ? region : [region, a.country].filter(Boolean).filter((v, i, arr) => arr.indexOf(v) === i).join(', '),
+      lat: Number(item.lat),
+      lng: Number(item.lon),
+      tz: isId ? tzForProvince(region) : deviceTz
+    };
+  }
+
+  let searchTimer = null;
+  let searchSeq = 0;
+  input.addEventListener('input', () => {
+    onlineResults = [];
+    renderResults();
+    status.textContent = '';
+    clearTimeout(searchTimer);
+    const q = input.value.trim();
+    if (q.length < 3) return;
+    searchTimer = setTimeout(async () => {
+      const seq = ++searchSeq;
+      try {
+        const url = 'https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=6&accept-language=id&q=' + encodeURIComponent(q);
+        const res = await fetch(url, { headers: { Accept: 'application/json' } });
+        if (!res.ok) throw new Error(res.status);
+        const data = await res.json();
+        if (seq !== searchSeq) return;
+        const seen = new Set();
+        onlineResults = data.map(placeFromNominatim).filter((l) => {
+          const k = l.name + '|' + l.region;
+          if (seen.has(k) || !isFinite(l.lat) || !isFinite(l.lng)) return false;
+          seen.add(k);
+          return true;
+        });
+        renderResults();
+        if (!results.children.length) status.textContent = 'Kota tidak ditemukan. Coba nama lain.';
+      } catch (e) {
+        if (seq === searchSeq && !results.children.length) status.textContent = 'Kota tidak ada di daftar dan pencarian online gagal (cek koneksi internet).';
+      }
+    }, 600);
+  });
+
+  $('geoBtn').addEventListener('click', () => {
+    const btn = $('geoBtn');
+    if (!navigator.geolocation) { status.textContent = 'Browser ini tidak mendukung deteksi lokasi. Silakan cari kota.'; return; }
+    btn.disabled = true;
+    status.textContent = 'Mencari lokasi…';
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      let loc = { name: 'Lokasi saya', region: lat.toFixed(3) + ', ' + lng.toFixed(3), lat, lng, tz: deviceTz };
+      try {
+        const url = 'https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=10&accept-language=id&lat=' + lat + '&lon=' + lng;
+        const res = await fetch(url, { headers: { Accept: 'application/json' } });
+        if (res.ok) {
+          const p = placeFromNominatim(await res.json());
+          loc = { ...p, lat, lng };
+        }
+      } catch (e) {}
+      btn.disabled = false;
+      status.textContent = '';
+      chooseLocation(loc);
+    }, (err) => {
+      btn.disabled = false;
+      status.textContent = err.code === 1
+        ? 'Izin lokasi ditolak. Silakan cari kota secara manual.'
+        : 'Lokasi tidak bisa didapat. Silakan cari kota secara manual.';
+    }, { enableHighAccuracy: false, timeout: 15000, maximumAge: 600000 });
+  });
+
+  $('cancelSetup').addEventListener('click', showTimer);
+
+  function chooseLocation(loc) {
+    settings.location = loc;
+    save();
+    resetCache();
+    showTimer();
+  }
+
+  function showSetup() {
+    els.app.hidden = true;
+    els.setup.hidden = false;
+    $('cancelSetup').hidden = !settings.location;
+    input.value = '';
+    onlineResults = [];
+    status.textContent = '';
+    renderResults();
+    clearTimeout(tickTimer);
+  }
+
+  function showTimer() {
+    els.setup.hidden = true;
+    els.app.hidden = false;
+    renderHeader();
+    tick();
+    updateWakeLock();
+  }
+
+  /* ================= Mulai ================= */
+
+  buildPrayerList();
+  applyTheme();
+  if (settings.location) showTimer(); else showSetup();
+
+  // Untuk pengujian di konsol: window.SholatTimer.prayerTimes(2026, 10, 25, {lat, lng}, 'kemenag', 2)
+  window.SholatTimer = { prayerTimes, CITIES };
+})();
+</script>
+</body>
+</html>
