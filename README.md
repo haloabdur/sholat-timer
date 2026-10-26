@@ -10,6 +10,7 @@ Hitung mundur sederhana menuju waktu sholat berikutnya (5 waktu). Satu file `ind
 - Mode terang / gelap / otomatis (mengikuti sistem).
 - Pengaturan: durasi jeda (1–30 menit), metode perhitungan (default Kemenag RI: Subuh 20°, Isya 18°), koreksi waktu/ihtiyat (default +2 menit), layar tetap menyala.
 - Tombol layar penuh untuk TV/monitor.
+- Mode full: hanya tulisan "Menuju …" dan timer yang sangat besar (ketuk layar atau Esc untuk keluar). Mode ini tetap aktif setelah halaman dimuat ulang.
 - Zona waktu WIB/WITA/WIT mengikuti provinsi lokasi.
 - Semua pengaturan tersimpan di browser (localStorage).
 
